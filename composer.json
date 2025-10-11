@@ -1,0 +1,65 @@
+{
+    "name": "steperlin/flarum-service-worker-cache",
+    "description": "Flarum扩展：通过Service Worker实现智能缓存，显著提升论坛加载速度和用户体验",
+    "keywords": ["flarum", "extension", "cache", "service-worker", "performance", "pwa"],
+    "type": "flarum-extension",
+    "license": "Apache-2.0",
+    "homepage": "https://github.com/linkerlin/flarum-service-worker-cache",
+    "support": {
+        "issues": "https://github.com/linkerlin/flarum-service-worker-cache/issues",
+        "source": "https://github.com/linkerlin/flarum-service-worker-cache"
+    },
+    "require": {
+        "flarum/core": "^2.0.0@beta",
+        "php": ">=8.1"
+    },
+    "require-dev": {
+        "flarum/testing": "^2.0.0@beta"
+    },
+    "authors": [
+        {
+            "name": "Steper Lin",
+            "email": "steper.lin@icloud.com",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SteperLin\\ServiceWorkerCache\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SteperLin\\ServiceWorkerCache\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "Service Worker Cache",
+            "category": "feature",
+            "icon": {
+                "name": "fas fa-bolt",
+                "backgroundColor": "#6932d1",
+                "color": "#fff"
+            },
+            "optional-dependencies": []
+        },
+        "branch-alias": {
+            "dev-main": "1.2.x-dev"
+        },
+    "version": "1.3.2"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "@deploy-service-worker"
+        ],
+        "post-update-cmd": [
+            "@deploy-service-worker"
+        ],
+        "deploy-service-worker": [
+            "php -r \"SteperLin\\ServiceWorkerCache\\Installer::deployServiceWorker();\""
+        ]
+    },
+    "minimum-stability": "beta",
+    "prefer-stable": true
+}
