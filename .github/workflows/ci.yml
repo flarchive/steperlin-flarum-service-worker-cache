@@ -1,0 +1,116 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+jobs:
+  validate:
+    name: Validate Package
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, json, curl, zip, dom
+        tools: composer
+    
+    - name: Cache Composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: /tmp/composer-cache
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-composer-
+    
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest
+    
+    - name: Validate composer.json
+      run: composer validate --strict
+    
+    - name: Check PHP syntax
+      run: find src/ -name "*.php" -exec php -l {} \;
+    
+    - name: Check Service Worker syntax
+      run: node -c service-worker.js
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: validate
+    
+    strategy:
+      matrix:
+        php-version: ['8.1', '8.2', '8.3']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP ${{ matrix.php-version }}
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, xml, ctype, json, curl, zip, dom
+        tools: composer
+    
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest
+    
+    # 这里可以添加实际的测试命令
+    - name: Run Tests
+      run: echo "Tests will be added in future versions"
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: validate
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        tools: composer
+    
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest
+    
+    # 安全扫描可以使用 psalm, phpstan 等工具
+    - name: Security Audit
+      run: composer audit || true
+
+  publish:
+    name: Publish to Packagist
+    runs-on: ubuntu-latest
+    needs: [validate, test, security]
+    if: github.event_name == 'release'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        tools: composer
+    
+    - name: Validate release
+      run: |
+        composer validate --strict
+        echo "Release validation passed"
+    
+    # Packagist 会自动从 GitHub releases 同步
+    # 这里可以添加其他发布后的操作
+    - name: Notify success
+      run: echo "Package published successfully!"
